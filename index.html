@@ -15,7 +15,7 @@
     .wrap{display:flex;flex-direction:column;height:100%}
     .topbar{display:flex;align-items:center;gap:.75rem;padding:.75rem 1rem;border-bottom:1px solid var(--border);background:linear-gradient(180deg,#0b1324,#0a1020)}
     .logo{display:flex;align-items:center;gap:.6rem;font-weight:700;letter-spacing:.5px}
-    .logo-badge{width:28px;height:28px;border-radius:9px;background:radial-gradient(circle at 30% 30%,var(--accent),var(--accent-2));box-shadow:0 0 24px rgba(34,211,238,.45)}
+    .logo-img{width:36px;height:36px;border-radius:10px;object-fit:cover;box-shadow:0 0 24px rgba(34,211,238,.45)}
     .sp{flex:1}
     .controls{display:flex;flex-wrap:wrap;gap:.5rem}
     .btn{appearance:none;border:1px solid var(--border);background:#0b1220;color:var(--text);padding:.5rem .75rem;border-radius:.8rem;cursor:pointer;box-shadow:var(--shadow);transition:.2s ease; font-weight:600}
@@ -55,7 +55,7 @@ iframe.pdf{width:100%;height:calc(100% - 2.4rem);background:#0a0a0a;border:0}
 <div class="wrap">
   <header class="topbar">
     <div class="logo" title="AVIIXSMW">
-      <div class="logo-badge"></div>
+      <img id="logoImg" class="logo-img" src="logo.png" alt="AVIIXSMW" />
       <span>AVIIXSMW — Dual Player</span>
     </div>
     <div class="sp"></div>
@@ -98,13 +98,14 @@ iframe.pdf{width:100%;height:calc(100% - 2.4rem);background:#0a0a0a;border:0}
 </div>
 
   </section>  <div class="helper">
-    Paste URLs via query string: <span class="kbd">?playurl=...&pdf=...</span> • Example sources may require you to press <b>Play</b> due to browser autoplay rules.
+    Paste URLs via query string: <span class="kbd">?playurl=...&pdf=...&logo=...</span> • Example sources may require you to press <b>Play</b> due to browser autoplay rules.
   </div>
 </div><script>
 (function(){
   const qs = new URLSearchParams(location.search);
   const playUrl = qs.get('playurl') || qs.get('video') || '';
   const pdfUrl  = qs.get('pdf')     || '';
+  const logoUrl = qs.get('logo')    || '';
 
   const video = document.getElementById('player');
   const pdf   = document.getElementById('pdfFrame');
@@ -117,6 +118,10 @@ iframe.pdf{width:100%;height:calc(100% - 2.4rem);background:#0a0a0a;border:0}
   const openPdfBtn = document.getElementById('openPdfBtn');
   const timeChip = document.getElementById('timeChip');
   const corsNote = document.getElementById('corsNote');
+  const logoImg  = document.getElementById('logoImg');
+
+  // Set logo from query param if provided
+  if(logoUrl){ logoImg.src = logoUrl; }
 
   // Load sources
   if(playUrl){ video.src = playUrl; }
