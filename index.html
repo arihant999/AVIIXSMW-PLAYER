@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>AVIIXSMW Player</title>
+  <title>Smart PDF + Video Player</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -33,7 +33,6 @@
       z-index: 2;
       box-shadow: 0 4px 12px rgba(0,0,0,0.3);
       border: 1px solid rgba(255,255,255,0.1);
-      cursor: move;
     }
     video {
       width: 100%;
@@ -51,6 +50,7 @@
       padding: 0.8rem 1rem;
       z-index: 3;
       backdrop-filter: blur(5px);
+      transition: opacity 0.3s ease;
     }
     .controls-left {
       display: flex;
@@ -62,15 +62,16 @@
       align-items: center;
       gap: 1rem;
     }
-    .controls button, .controls select {
+    .controls button {
       background: none;
       border: none;
       cursor: pointer;
       padding: 0.4rem;
-      border-radius: 6px;
+      border-radius: 50%;
+      transition: all 0.2s ease;
       color: white;
     }
-    .controls button:hover, .controls select:hover {
+    .controls button:hover {
       background: rgba(255,255,255,0.1);
     }
     .controls img {
@@ -106,6 +107,7 @@
       border-radius: 3px;
       cursor: pointer;
       z-index: 4;
+      transition: opacity 0.3s ease;
     }
     .progress-bar {
       height: 100%;
@@ -130,20 +132,23 @@
     .progress-container:hover .progress-bar::after {
       opacity: 1;
     }
+    .hide-controls {
+      opacity: 0;
+      pointer-events: none;
+    }
   </style>
 </head>
 <body>
- 
   <iframe class="pdf-container" id="pdfFrame"></iframe>
- 
+
   <div class="video-container" id="videoContainer">
     <video id="video" playsinline></video>
   </div>
- 
+
   <div class="progress-container" id="progressContainer">
     <div class="progress-bar" id="progressBar"></div>
   </div>
- 
+
   <div class="controls" id="controls">
     <div class="controls-left">
       <button id="playPause" class="play-pause-btn">
@@ -158,23 +163,18 @@
       <div class="time" id="time">00:00:00 / 00:00:00</div>
     </div>
     <div class="controls-right">
-      <select id="speedControl">
-        <option value="0.5">0.5x</option>
-        <option value="1" selected>1x</option>
-        <option value="1.5">1.5x</option>
-        <option value="2">2x</option>
-      </select>
+      <button id="speedBtn">1x</button>
       <button id="fullscreen">
         <img src="https://www.pw.live/watch/maximize.svg" alt="fullscreen" />
       </button>
     </div>
   </div>
- 
+
   <script>
     const params = new URLSearchParams(window.location.search);
     const videoURL = params.get("playurl");
     const pdfURL = params.get("pdf");
- 
+
     const video = document.getElementById("video");
     const playPause = document.getElementById("playPause");
     const playIcon = document.getElementById("playIcon");
@@ -186,23 +186,24 @@
     const progressContainer = document.getElementById("progressContainer");
     const progressBar = document.getElementById("progressBar");
     const videoContainer = document.getElementById("videoContainer");
-    const speedControl = document.getElementById("speedControl");
- 
+    const controls = document.getElementById("controls");
+    const speedBtn = document.getElementById("speedBtn");
+
     function getVideoType(url) {
       if (url.endsWith(".mp4")) return "video/mp4";
       if (url.endsWith(".webm")) return "video/webm";
       if (url.endsWith(".m3u8")) return "application/x-mpegURL";
       return "video/mp4";
     }
- 
+
     const source = document.createElement("source");
     source.src = videoURL;
     source.type = getVideoType(videoURL);
     video.appendChild(source);
     video.load();
- 
-    pdfFrame.src = `https://brandedproxy.susheelkumar31524.workers.dev/url=${encodeURIComponent(pdfURL)}`;
- 
+
+    pdfFrame.src = `https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(pdfURL)}`;
+
     playPause.addEventListener("click", () => {
       if (video.paused) {
         video.play();
@@ -212,10 +213,15 @@
         playIcon.textContent = "▶";
       }
     });
- 
-    forward.addEventListener("click", () => video.currentTime += 10);
-    rewind.addEventListener("click", () => video.currentTime -= 10);
- 
+
+    forward.addEventListener("click", () => {
+      video.currentTime += 10;
+    });
+
+    rewind.addEventListener("click", () => {
+      video.currentTime -= 10;
+    });
+
     fullscreen.addEventListener("click", () => {
       if (!document.fullscreenElement) {
         document.documentElement.requestFullscreen();
@@ -223,45 +229,83 @@
         document.exitFullscreen();
       }
     });
- 
-    speedControl.addEventListener("change", () => {
-      video.playbackRate = parseFloat(speedControl.value);
-    });
- 
+
     function format(sec) {
       const h = Math.floor(sec / 3600);
       const m = Math.floor((sec % 3600) / 60);
       const s = Math.floor(sec % 60);
       return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
     }
- 
+
     video.addEventListener("timeupdate", () => {
       time.textContent = `${format(video.currentTime)} / ${format(video.duration || 0)}`;
       const progress = (video.currentTime / video.duration) * 100;
       progressBar.style.width = `${progress}%`;
     });
- 
+
     progressContainer.addEventListener("click", (e) => {
       const rect = progressContainer.getBoundingClientRect();
       const pos = (e.clientX - rect.left) / rect.width;
       video.currentTime = pos * video.duration;
     });
- 
-    // Floating/Draggable Video
-    let isDragging = false, offsetX, offsetY;
-    videoContainer.addEventListener("mousedown", (e) => {
-      isDragging = true;
-      offsetX = e.clientX - videoContainer.offsetLeft;
-      offsetY = e.clientY - videoContainer.offsetTop;
+
+    // ---- Playback Speed Control ----
+    const speeds = [0.5, 1, 1.5, 2];
+    let currentSpeedIndex = 1; // Default 1x
+    speedBtn.addEventListener("click", () => {
+      currentSpeedIndex = (currentSpeedIndex + 1) % speeds.length;
+      video.playbackRate = speeds[currentSpeedIndex];
+      speedBtn.textContent = speeds[currentSpeedIndex] + "x";
     });
-    document.addEventListener("mousemove", (e) => {
-      if (isDragging) {
-        videoContainer.style.left = `${e.clientX - offsetX}px`;
-        videoContainer.style.top = `${e.clientY - offsetY}px`;
+    video.playbackRate = 1; // default
+
+    // Auto-hide controls in fullscreen
+    let hideTimer;
+    let isFullscreen = false;
+
+    function showControlsTemporarily() {
+      controls.classList.remove("hide-controls");
+      progressContainer.classList.remove("hide-controls");
+      clearTimeout(hideTimer);
+      if (isFullscreen) {
+        hideTimer = setTimeout(() => {
+          controls.classList.add("hide-controls");
+          progressContainer.classList.add("hide-controls");
+        }, 3000);
+      }
+    }
+
+    document.addEventListener("fullscreenchange", () => {
+      isFullscreen = !!document.fullscreenElement;
+
+      if (isFullscreen) {
+        pdfFrame.style.position = "fixed";
+        pdfFrame.style.top = "0";
+        pdfFrame.style.left = "0";
+        pdfFrame.style.width = "100vw";
+        pdfFrame.style.height = "100vh";
+        pdfFrame.style.zIndex = "1";
+
+        videoContainer.style.position = "fixed";
+        videoContainer.style.width = "240px";
+        videoContainer.style.height = "135px";
+        videoContainer.style.top = "1rem";
+        videoContainer.style.right = "1rem";
+        videoContainer.style.zIndex = "2";
+
+        showControlsTemporarily();
+      } else {
+        pdfFrame.style = "";
+        videoContainer.style = "";
+        controls.classList.remove("hide-controls");
+        progressContainer.classList.remove("hide-controls");
       }
     });
-    document.addEventListener("mouseup", () => isDragging = false);
+
+    // Tap screen to show controls again
+    document.addEventListener("click", () => {
+      if (isFullscreen) showControlsTemporarily();
+    });
   </script>
- 
 </body>
 </html>
