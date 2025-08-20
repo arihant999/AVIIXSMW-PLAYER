@@ -201,7 +201,7 @@
     video.appendChild(source);
     video.load();
  
-    pdfFrame.src = `https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(pdfURL)}`;
+    pdfFrame.src = `https://docs.google.com/viewer?embedded=true&url=${encodeURIComponent(pdfURL)}`;
  
     playPause.addEventListener("click", () => {
       if (video.paused) {
