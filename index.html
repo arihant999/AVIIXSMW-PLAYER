@@ -1,311 +1,111 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Smart PDF + Video Player</title>
+  <meta charset="UTF-8">
+  <title>ArihantJain999 Video Player</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #000;
+      background: #111;
       color: #fff;
-      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      font-family: sans-serif;
     }
-    .pdf-container {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
+    input[type="text"] {
+      padding: 10px;
+      width: 80%;
+      max-width: 600px;
+      margin-bottom: 10px;
+      border-radius: 5px;
       border: none;
-      z-index: 1;
+      font-size: 16px;
     }
-    .video-container {
-      position: absolute;
-      top: 1rem;
-      right: 1rem;
-      width: 240px;
-      height: 135px;
-      background: #000;
-      border-radius: 8px;
-      overflow: hidden;
-      z-index: 2;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-      border: 1px solid rgba(255,255,255,0.1);
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      background-color: #28a745;
+      color: white;
+      cursor: pointer;
+      margin-bottom: 20px;
     }
     video {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
+      width: 90%;
+      max-width: 720px;
+      margin-bottom: 15px;
+      border: 3px solid #444;
+      border-radius: 10px;
+      display: none;
     }
     .controls {
-      position: fixed;
-      bottom: 0;
-      width: 100%;
-      background: rgba(0,0,0,0.85);
       display: flex;
+      gap: 10px;
       align-items: center;
-      justify-content: space-between;
-      padding: 0.8rem 1rem;
-      z-index: 3;
-      backdrop-filter: blur(5px);
-      transition: opacity 0.3s ease;
+      margin-bottom: 20px;
+      display: none;
     }
-    .controls-left {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
+    select {
+      padding: 5px 10px;
+      font-size: 16px;
+      border-radius: 5px;
     }
-    .controls-right {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
-    .controls button {
-      background: none;
-      border: none;
-      cursor: pointer;
-      padding: 0.4rem;
-      border-radius: 50%;
-      transition: all 0.2s ease;
-      color: white;
-    }
-    .controls button:hover {
-      background: rgba(255,255,255,0.1);
-    }
-    .controls img {
-      width: 1.8rem;
-      height: 1.8rem;
-    }
-    .play-pause-btn {
-      background: #6B63FE !important;
-      width: 2.5rem;
-      height: 2.5rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .play-pause-icon {
-      font-size: 1.4rem;
-      font-weight: bold;
-      color: white;
-    }
-    .time {
-      font-size: 0.9rem;
-      color: #ccc;
-      font-family: 'Courier New', monospace;
-      min-width: 120px;
-    }
-    .progress-container {
-      position: absolute;
-      bottom: 3.5rem;
-      left: 1rem;
-      right: 1rem;
-      height: 6px;
-      background: rgba(255,255,255,0.2);
-      border-radius: 3px;
-      cursor: pointer;
-      z-index: 4;
-      transition: opacity 0.3s ease;
-    }
-    .progress-bar {
-      height: 100%;
-      background: #6B63FE;
-      border-radius: 3px;
-      width: 0%;
-      position: relative;
-    }
-    .progress-bar::after {
-      content: '';
-      position: absolute;
-      right: -6px;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 12px;
-      height: 12px;
-      background: #fff;
-      border-radius: 50%;
-      opacity: 0;
-      transition: opacity 0.2s;
-    }
-    .progress-container:hover .progress-bar::after {
-      opacity: 1;
-    }
-    .hide-controls {
-      opacity: 0;
-      pointer-events: none;
+    footer {
+      margin-top: 30px;
+      font-size: 14px;
+      color: #aaa;
     }
   </style>
 </head>
 <body>
-  <iframe class="pdf-container" id="pdfFrame"></iframe>
 
-  <div class="video-container" id="videoContainer">
-    <video id="video" playsinline></video>
+  <h2>ðŸŽ¬ ArihantJain999's Custom Video Player</h2>
+
+  <input type="text" id="videoURL" placeholder="Paste your .webm or .mp4 video link here">
+  <button onclick="loadVideo()">Load Video</button>
+
+  <video id="myVideo" controls>
+    <source id="videoSource" src="" type="video/webm">
+    Your browser does not support the video tag.
+  </video>
+
+  <div class="controls" id="speedControl">
+    <label for="speed">â© Playback Speed:</label>
+    <select id="speed">
+      <option value="0.5">0.5x</option>
+      <option value="0.75">0.75x</option>
+      <option value="1" selected>1x (Normal)</option>
+      <option value="1.25">1.25x</option>
+      <option value="1.5">1.5x</option>
+      <option value="2">2x</option>
+    </select>
   </div>
 
-  <div class="progress-container" id="progressContainer">
-    <div class="progress-bar" id="progressBar"></div>
-  </div>
-
-  <div class="controls" id="controls">
-    <div class="controls-left">
-      <button id="playPause" class="play-pause-btn">
-        <span class="play-pause-icon" id="playIcon">▶</span>
-      </button>
-      <button id="rewind">
-        <img src="https://www.pw.live/watch/backward.svg" alt="rewind" />
-      </button>
-      <button id="forward">
-        <img src="https://www.pw.live/watch/forward.svg" alt="forward" />
-      </button>
-      <div class="time" id="time">00:00:00 / 00:00:00</div>
-    </div>
-    <div class="controls-right">
-      <button id="speedBtn">1x</button>
-      <button id="fullscreen">
-        <img src="https://www.pw.live/watch/maximize.svg" alt="fullscreen" />
-      </button>
-    </div>
-  </div>
+  <footer>Made by <strong>arihantjain999</strong></footer>
 
   <script>
-    const params = new URLSearchParams(window.location.search);
-    const videoURL = params.get("playurl");
-    const pdfURL = params.get("pdf");
+    const video = document.getElementById('myVideo');
+    const videoSource = document.getElementById('videoSource');
+    const speedControl = document.getElementById('speedControl');
+    const speed = document.getElementById('speed');
 
-    const video = document.getElementById("video");
-    const playPause = document.getElementById("playPause");
-    const playIcon = document.getElementById("playIcon");
-    const forward = document.getElementById("forward");
-    const rewind = document.getElementById("rewind");
-    const fullscreen = document.getElementById("fullscreen");
-    const time = document.getElementById("time");
-    const pdfFrame = document.getElementById("pdfFrame");
-    const progressContainer = document.getElementById("progressContainer");
-    const progressBar = document.getElementById("progressBar");
-    const videoContainer = document.getElementById("videoContainer");
-    const controls = document.getElementById("controls");
-    const speedBtn = document.getElementById("speedBtn");
-
-    function getVideoType(url) {
-      if (url.endsWith(".mp4")) return "video/mp4";
-      if (url.endsWith(".webm")) return "video/webm";
-      if (url.endsWith(".m3u8")) return "application/x-mpegURL";
-      return "video/mp4";
-    }
-
-    const source = document.createElement("source");
-    source.src = videoURL;
-    source.type = getVideoType(videoURL);
-    video.appendChild(source);
-    video.load();
-
-    pdfFrame.src = `https://mozilla.github.io/pdf.js/web/viewer.html/?url=${encodeURIComponent(pdfURL)}`;
-
-    playPause.addEventListener("click", () => {
-      if (video.paused) {
-        video.play();
-        playIcon.textContent = "❚❚";
-      } else {
-        video.pause();
-        playIcon.textContent = "▶";
-      }
-    });
-
-    forward.addEventListener("click", () => {
-      video.currentTime += 10;
-    });
-
-    rewind.addEventListener("click", () => {
-      video.currentTime -= 10;
-    });
-
-    fullscreen.addEventListener("click", () => {
-      if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen();
-      } else {
-        document.exitFullscreen();
-      }
-    });
-
-    function format(sec) {
-      const h = Math.floor(sec / 3600);
-      const m = Math.floor((sec % 3600) / 60);
-      const s = Math.floor(sec % 60);
-      return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-    }
-
-    video.addEventListener("timeupdate", () => {
-      time.textContent = `${format(video.currentTime)} / ${format(video.duration || 0)}`;
-      const progress = (video.currentTime / video.duration) * 100;
-      progressBar.style.width = `${progress}%`;
-    });
-
-    progressContainer.addEventListener("click", (e) => {
-      const rect = progressContainer.getBoundingClientRect();
-      const pos = (e.clientX - rect.left) / rect.width;
-      video.currentTime = pos * video.duration;
-    });
-
-    // ---- Playback Speed Control ----
-    const speeds = [0.5, 1, 1.5, 2];
-    let currentSpeedIndex = 1; // Default 1x
-    speedBtn.addEventListener("click", () => {
-      currentSpeedIndex = (currentSpeedIndex + 1) % speeds.length;
-      video.playbackRate = speeds[currentSpeedIndex];
-      speedBtn.textContent = speeds[currentSpeedIndex] + "x";
-    });
-    video.playbackRate = 1; // default
-
-    // Auto-hide controls in fullscreen
-    let hideTimer;
-    let isFullscreen = false;
-
-    function showControlsTemporarily() {
-      controls.classList.remove("hide-controls");
-      progressContainer.classList.remove("hide-controls");
-      clearTimeout(hideTimer);
-      if (isFullscreen) {
-        hideTimer = setTimeout(() => {
-          controls.classList.add("hide-controls");
-          progressContainer.classList.add("hide-controls");
-        }, 3000);
+    function loadVideo() {
+      const url = document.getElementById('videoURL').value.trim();
+      if (url) {
+        videoSource.src = url;
+        video.load();
+        video.style.display = "block";
+        speedControl.style.display = "flex";
       }
     }
 
-    document.addEventListener("fullscreenchange", () => {
-      isFullscreen = !!document.fullscreenElement;
-
-      if (isFullscreen) {
-        pdfFrame.style.position = "fixed";
-        pdfFrame.style.top = "0";
-        pdfFrame.style.left = "0";
-        pdfFrame.style.width = "100vw";
-        pdfFrame.style.height = "100vh";
-        pdfFrame.style.zIndex = "1";
-
-        videoContainer.style.position = "fixed";
-        videoContainer.style.width = "240px";
-        videoContainer.style.height = "135px";
-        videoContainer.style.top = "1rem";
-        videoContainer.style.right = "1rem";
-        videoContainer.style.zIndex = "2";
-
-        showControlsTemporarily();
-      } else {
-        pdfFrame.style = "";
-        videoContainer.style = "";
-        controls.classList.remove("hide-controls");
-        progressContainer.classList.remove("hide-controls");
-      }
-    });
-
-    // Tap screen to show controls again
-    document.addEventListener("click", () => {
-      if (isFullscreen) showControlsTemporarily();
+    speed.addEventListener('change', () => {
+      video.playbackRate = parseFloat(speed.value);
     });
   </script>
+
 </body>
 </html>
